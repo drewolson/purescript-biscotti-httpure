@@ -1,0 +1,10 @@
+{
+  "description": "purescript-biscotti-httpure",
+  "repository": "https://github.com/drewolson/purescript-biscotti-httpure",
+  "license": "MIT",
+  "devDependencies": {
+    "purescript-language-server": "^0.12.7",
+    "uuid": "^3.3.3",
+    "uuid-validate": "0.0.3"
+  }
+}
