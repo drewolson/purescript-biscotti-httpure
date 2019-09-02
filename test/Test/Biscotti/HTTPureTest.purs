@@ -4,14 +4,14 @@ module Test.Biscotti.HTTPureTest
 
 import Prelude
 
-import Biscotti.Cookie (Cookie)
 import Biscotti.Cookie as Cookie
+import Biscotti.Cookie.Types (Cookie(..))
 import Biscotti.HTTPure as Biscotti.HTTPure
 import Biscotti.Session (SessionStore)
 import Biscotti.Session as Session
 import Data.Argonaut (class DecodeJson)
 import Data.Either (Either(..), fromRight)
-import Data.Maybe (fromJust)
+import Data.Maybe (Maybe(..), fromJust)
 import Effect.Aff.Class (class MonadAff)
 import Foreign.Object as Object
 import HTTPure as HTTPure
@@ -22,7 +22,7 @@ import HTTPure.Status as Status
 import HTTPure.Version (Version(..))
 import Partial.Unsafe (unsafePartial)
 import Test.Unit (TestSuite, suite, test)
-import Test.Unit.Assert (shouldEqual)
+import Test.Unit.Assert (assert, shouldEqual)
 
 mockResponse :: HTTPure.Response
 mockResponse =
@@ -62,13 +62,13 @@ testSuite = do
         session `shouldEqual` { message: "hello" }
 
     suite "destroySession" do
-      test "destroys the sesion and sets an empty cookie" do
+      test "destroys the sesion and sets an expired cookie" do
         store <- Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         response <- unsafePartial $ fromRight <$> Biscotti.HTTPure.destroySession store (mockRequest cookie) mockResponse
-        let cookie' = responseCookie response
+        let Cookie { expires } = responseCookie response
 
-        cookie' `shouldEqual` Cookie.empty
+        assert "expected an expires date" $ expires /= Nothing
 
         found <- Session.get store cookie
 

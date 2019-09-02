@@ -13,6 +13,7 @@ let additions =
               , "formatters"
               , "gen"
               , "newtype"
+              , "now"
               , "prelude"
               , "profunctor-lenses"
               , "psci-support"
@@ -25,7 +26,7 @@ let additions =
           , repo =
               "https://github.com/drewolson/purescript-biscotti-cookie.git"
           , version =
-              "7dde03494bf346440d2fd647a8fbd26078a05b82"
+              "fcd1fa9da245dfce36bcb9e790b6d6bcfa3843d0"
           }
       , biscotti-session =
           { dependencies =
@@ -45,7 +46,7 @@ let additions =
           , repo =
               "https://github.com/drewolson/purescript-biscotti-session.git"
           , version =
-              "3fbf33449127a786898554d0ea46c0cb19880d7f"
+              "8457b017df299bba2e2503698d345c14f087c711"
           }
       }
 
