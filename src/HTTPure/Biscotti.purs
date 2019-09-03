@@ -24,13 +24,27 @@ import Effect.Aff.Class (class MonadAff)
 import HTTPure (Headers)
 import HTTPure as HTTPure
 
-createSession :: forall m a. MonadAff m => EncodeJson a => SessionStore m a -> a -> HTTPure.Response -> m (Either String HTTPure.Response)
+createSession
+  :: forall m a
+   . MonadAff m
+  => EncodeJson a
+  => SessionStore m a
+  -> a
+  -> HTTPure.Response
+  -> m (Either String HTTPure.Response)
 createSession store session response = do
   result <- Session.create store session
 
   pure $ setSessionCookie response <$> result
 
-destroySession :: forall m a. MonadAff m => EncodeJson a => SessionStore m a -> HTTPure.Request -> HTTPure.Response -> m (Either String HTTPure.Response)
+destroySession
+  :: forall m a
+   . MonadAff m
+  => EncodeJson a
+  => SessionStore m a
+  -> HTTPure.Request
+  -> HTTPure.Response
+  -> m (Either String HTTPure.Response)
 destroySession store request response =
   case getSessionCookie request of
     Left e ->
@@ -40,7 +54,13 @@ destroySession store request response =
       cookie' <- Session.destroy store cookie
       pure $ setSessionCookie response <$> cookie'
 
-getSession :: forall m a. MonadAff m => DecodeJson a => SessionStore m a -> HTTPure.Request -> m (Either String a)
+getSession
+  :: forall m a
+   . MonadAff m
+  => DecodeJson a
+  => SessionStore m a
+  -> HTTPure.Request
+  -> m (Either String a)
 getSession store request =
   case getSessionCookie request of
     Left a ->
@@ -49,7 +69,15 @@ getSession store request =
     Right cookie ->
       Session.get store cookie
 
-setSession :: forall m a. MonadAff m => EncodeJson a => SessionStore m a -> a -> HTTPure.Request -> HTTPure.Response -> m (Either String HTTPure.Response)
+setSession
+  :: forall m a
+   . MonadAff m
+  => EncodeJson a
+  => SessionStore m a
+  -> a
+  -> HTTPure.Request
+  -> HTTPure.Response
+  -> m (Either String HTTPure.Response)
 setSession store session request response =
   case getSessionCookie request of
     Left e ->
