@@ -1,4 +1,4 @@
-module Test.Biscotti.HTTPureTest
+module Test.HTTPure.BiscottiTest
   ( testSuite
   ) where
 
@@ -6,7 +6,6 @@ import Prelude
 
 import Biscotti.Cookie as Cookie
 import Biscotti.Cookie.Types (Cookie(..))
-import Biscotti.HTTPure as Biscotti.HTTPure
 import Biscotti.Session (SessionStore)
 import Biscotti.Session as Session
 import Data.Argonaut (class DecodeJson)
@@ -15,6 +14,7 @@ import Data.Maybe (Maybe(..), fromJust)
 import Effect.Aff.Class (class MonadAff)
 import Foreign.Object as Object
 import HTTPure as HTTPure
+import HTTPure.Biscotti as Biscotti
 import HTTPure.Headers as Headers
 import HTTPure.Lookup as Lookup
 import HTTPure.Method as Method
@@ -52,11 +52,11 @@ responseSession store response =
 
 testSuite :: TestSuite
 testSuite = do
-  suite "Biscotti.HTTPure" do
+  suite "Biscotti" do
     suite "createSession" do
       test "creates a session cookie" do
         store <- Session.memoryStore "_my_app"
-        response <- unsafePartial $ fromRight <$> Biscotti.HTTPure.createSession store { message: "hello" } mockResponse
+        response <- unsafePartial $ fromRight <$> Biscotti.createSession store { message: "hello" } mockResponse
         session <- responseSession store response
 
         session `shouldEqual` { message: "hello" }
@@ -65,7 +65,7 @@ testSuite = do
       test "destroys the sesion and sets an expired cookie" do
         store <- Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
-        response <- unsafePartial $ fromRight <$> Biscotti.HTTPure.destroySession store (mockRequest cookie) mockResponse
+        response <- unsafePartial $ fromRight <$> Biscotti.destroySession store (mockRequest cookie) mockResponse
         let Cookie { expires } = responseCookie response
 
         assert "expected an expires date" $ expires /= Nothing
@@ -79,7 +79,7 @@ testSuite = do
         store <- Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         let request = mockRequest cookie
-        session <- unsafePartial $ fromRight <$> Biscotti.HTTPure.getSession store request
+        session <- unsafePartial $ fromRight <$> Biscotti.getSession store request
 
         session `shouldEqual` { message: "hello" }
 
@@ -88,7 +88,7 @@ testSuite = do
         store <- Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         let request = mockRequest cookie
-        response <- unsafePartial $ fromRight <$> Biscotti.HTTPure.setSession store { message: "goodbye" } request mockResponse
+        response <- unsafePartial $ fromRight <$> Biscotti.setSession store { message: "goodbye" } request mockResponse
 
         session <- responseSession store response
 

@@ -1,4 +1,4 @@
-module Biscotti.HTTPure
+module HTTPure.Biscotti
   ( createSession
   , destroySession
   , getSession
@@ -18,7 +18,6 @@ import Data.Lens (Lens', lens)
 import Data.Lens as Lens
 import Data.Lens.At (at)
 import Data.Lens.Iso.Newtype (_Newtype)
-import Data.Map.Internal as Map
 import Data.Maybe (Maybe)
 import Data.String.CaseInsensitive (CaseInsensitiveString(..))
 import Effect.Aff.Class (class MonadAff)
@@ -29,21 +28,21 @@ createSession :: forall m a. MonadAff m => EncodeJson a => SessionStore m a -> a
 createSession store session response = do
   result <- Session.create store session
 
-  pure $ setSessionHeader response <$> result
+  pure $ setSessionCookie response <$> result
 
 destroySession :: forall m a. MonadAff m => EncodeJson a => SessionStore m a -> HTTPure.Request -> HTTPure.Response -> m (Either String HTTPure.Response)
 destroySession store request response =
-  case getCookie request of
+  case getSessionCookie request of
     Left e ->
       pure $ Left e
 
     Right cookie -> do
       cookie' <- Session.destroy store cookie
-      pure $ setSessionHeader response <$> cookie'
+      pure $ setSessionCookie response <$> cookie'
 
 getSession :: forall m a. MonadAff m => DecodeJson a => SessionStore m a -> HTTPure.Request -> m (Either String a)
 getSession store request =
-  case getCookie request of
+  case getSessionCookie request of
     Left a ->
       pure $ Left a
 
@@ -52,13 +51,13 @@ getSession store request =
 
 setSession :: forall m a. MonadAff m => EncodeJson a => SessionStore m a -> a -> HTTPure.Request -> HTTPure.Response -> m (Either String HTTPure.Response)
 setSession store session request response =
-  case getCookie request of
+  case getSessionCookie request of
     Left e ->
       pure $ Left e
 
     Right cookie -> do
       cookie' <- Session.set store session cookie
-      pure $ setSessionHeader response <$> cookie'
+      pure $ setSessionCookie response <$> cookie'
 
 requestCookieTag :: String
 requestCookieTag = "Cookie"
@@ -66,12 +65,12 @@ requestCookieTag = "Cookie"
 responseCookieTag :: String
 responseCookieTag = "Set-Cookie"
 
-setSessionHeader :: HTTPure.Response -> Cookie -> HTTPure.Response
-setSessionHeader response cookie =
-  Lens.over (_headers <<< _Newtype) (Map.insert (CaseInsensitiveString responseCookieTag) (Cookie.stringify cookie)) response
+setSessionCookie :: HTTPure.Response -> Cookie -> HTTPure.Response
+setSessionCookie response cookie =
+  Lens.setJust (_headers <<< _Newtype <<< at (CaseInsensitiveString responseCookieTag)) (Cookie.stringify cookie) response
 
-getCookie :: HTTPure.Request -> Either String Cookie
-getCookie request = do
+getSessionCookie :: HTTPure.Request -> Either String Cookie
+getSessionCookie request = do
   cookie <- note "cookie not found" $ findCookie request
   lmap show $ Cookie.parse cookie
   where

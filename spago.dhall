@@ -1,5 +1,5 @@
 { name =
-    "biscotti-httpure"
+    "httpure-biscotti"
 , dependencies =
     [ "aff"
     , "argonaut"
