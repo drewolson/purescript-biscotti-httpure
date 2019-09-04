@@ -24,7 +24,7 @@ import Data.Lens.At (at)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Maybe (Maybe)
 import Data.String.CaseInsensitive (CaseInsensitiveString(..))
-import Effect.Aff.Class (class MonadAff)
+import Effect.Aff.Class (class MonadAff, liftAff)
 import HTTPure (Headers)
 import HTTPure as HTTPure
 
@@ -32,7 +32,7 @@ createSession
   :: forall m a
    . MonadAff m
   => EncodeJson a
-  => SessionStore m a
+  => SessionStore a
   -> a
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
@@ -42,13 +42,13 @@ createSession'
   :: forall m a
    . MonadAff m
   => EncodeJson a
-  => SessionStore m a
+  => SessionStore a
   -> (Cookie -> m Cookie)
   -> a
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
 createSession' store cookieUpdater session response = runExceptT do
-  cookie <- ExceptT $ Session.create store session
+  cookie <- ExceptT $ liftAff $ Session.create store session
   cookie' <- lift $ cookieUpdater cookie
 
   pure $ setSessionCookie response cookie'
@@ -57,13 +57,13 @@ destroySession
   :: forall m a
    . MonadAff m
   => EncodeJson a
-  => SessionStore m a
+  => SessionStore a
   -> HTTPure.Request
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
 destroySession store request response = runExceptT do
   cookie <- except $ getSessionCookie request
-  cookie' <- ExceptT $ Session.destroy store cookie
+  cookie' <- ExceptT $ liftAff $ Session.destroy store cookie
 
   pure $ setSessionCookie response cookie'
 
@@ -71,19 +71,19 @@ getSession
   :: forall m a
    . MonadAff m
   => DecodeJson a
-  => SessionStore m a
+  => SessionStore a
   -> HTTPure.Request
   -> m (Either String a)
 getSession store request = runExceptT do
   cookie <- except $ getSessionCookie request
 
-  ExceptT $ Session.get store cookie
+  ExceptT $ liftAff $ Session.get store cookie
 
 setSession
   :: forall m a
    . MonadAff m
   => EncodeJson a
-  => SessionStore m a
+  => SessionStore a
   -> a
   -> HTTPure.Request
   -> HTTPure.Response
@@ -94,7 +94,7 @@ setSession'
   :: forall m a
    . MonadAff m
   => EncodeJson a
-  => SessionStore m a
+  => SessionStore a
   -> (Cookie -> m Cookie)
   -> a
   -> HTTPure.Request
@@ -102,7 +102,7 @@ setSession'
   -> m (Either String HTTPure.Response)
 setSession' store cookieUpdater session request response = runExceptT do
   cookie <- except $ getSessionCookie request
-  cookie' <- ExceptT $ Session.set store session cookie
+  cookie' <- ExceptT $ liftAff $ Session.set store session cookie
   cookie'' <- lift $ cookieUpdater cookie'
 
   pure $ setSessionCookie response cookie''

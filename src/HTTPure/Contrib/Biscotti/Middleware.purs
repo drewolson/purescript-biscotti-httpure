@@ -39,7 +39,7 @@ new
   => EncodeJson b
   => DecodeJson b
   => SessionContainer a b
-  => SessionStore m b
+  => SessionStore b
   -> (HTTPure.Request -> m HTTPure.Response)
   -> HTTPure.Request
   -> m HTTPure.Response
@@ -58,7 +58,7 @@ new'
   => EncodeJson b
   => DecodeJson b
   => SessionContainer a b
-  => SessionStore m b
+  => SessionStore b
   -> ErrorHandler m
   -> CookieUpdater m
   -> (HTTPure.Request -> m HTTPure.Response)

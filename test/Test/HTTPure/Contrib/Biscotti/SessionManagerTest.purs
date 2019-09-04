@@ -11,7 +11,7 @@ import Biscotti.Session as Session
 import Data.Argonaut (class DecodeJson)
 import Data.Either (Either(..), fromRight)
 import Data.Maybe (Maybe(..), fromJust)
-import Effect.Aff.Class (class MonadAff)
+import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (liftEffect)
 import Foreign.Object as Object
 import HTTPure as HTTPure
@@ -47,9 +47,11 @@ responseCookie { headers } =
   let cookieString = unsafePartial $ fromJust $ Lookup.lookup headers "Set-Cookie"
    in unsafePartial $ fromRight $ Cookie.parse cookieString
 
-responseSession :: forall m a. MonadAff m => DecodeJson a => SessionStore m a -> HTTPure.Response -> m a
-responseSession store response =
-   unsafePartial $ fromRight <$> Session.get store (responseCookie response)
+responseSession :: forall m a. MonadAff m => DecodeJson a => SessionStore a -> HTTPure.Response -> m a
+responseSession store response = do
+  result <- liftAff $ Session.get store (responseCookie response)
+
+  pure $ unsafePartial $ fromRight $ result
 
 testSuite :: TestSuite
 testSuite = do
