@@ -12,6 +12,7 @@ import Data.Argonaut (class DecodeJson)
 import Data.Either (Either(..), fromRight)
 import Data.Maybe (Maybe(..), fromJust)
 import Effect.Aff.Class (class MonadAff)
+import Effect.Class (liftEffect)
 import Foreign.Object as Object
 import HTTPure as HTTPure
 import HTTPure.Contrib.Biscotti.SessionManager as SessionManager
@@ -55,7 +56,7 @@ testSuite = do
   suite "HTTPure.Contrib.Biscotti.SessionManager" do
     suite "createSession" do
       test "creates a session cookie" do
-        store <- Session.memoryStore "_my_app"
+        store <- liftEffect $ Session.memoryStore "_my_app"
         response <- unsafePartial $ fromRight <$> SessionManager.createSession store { message: "hello" } mockResponse
         session <- responseSession store response
 
@@ -63,7 +64,7 @@ testSuite = do
 
     suite "destroySession" do
       test "destroys the sesion and sets an expired cookie" do
-        store <- Session.memoryStore "_my_app"
+        store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         response <- unsafePartial $ fromRight <$> SessionManager.destroySession store (mockRequest cookie) mockResponse
         let Cookie { expires } = responseCookie response
@@ -76,7 +77,7 @@ testSuite = do
 
     suite "getSession" do
       test "retrieves the session" do
-        store <- Session.memoryStore "_my_app"
+        store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         let request = mockRequest cookie
         session <- unsafePartial $ fromRight <$> SessionManager.getSession store request
@@ -85,7 +86,7 @@ testSuite = do
 
     suite "setSession" do
       test "sets a session with new data" do
-        store <- Session.memoryStore "_my_app"
+        store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         let request = mockRequest cookie
         response <- unsafePartial $ fromRight <$> SessionManager.setSession store { message: "goodbye" } request mockResponse

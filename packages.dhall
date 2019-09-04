@@ -46,7 +46,7 @@ let additions =
           , repo =
               "https://github.com/drewolson/purescript-biscotti-session.git"
           , version =
-              "8457b017df299bba2e2503698d345c14f087c711"
+              "b9920c98e3054241892d155d39b3c2fef27d4d0b"
           }
       }
 
