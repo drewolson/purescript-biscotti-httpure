@@ -1,6 +1,6 @@
 {
-  "description": "purescript-httpure-biscotti",
-  "repository": "https://github.com/drewolson/purescript-httpure-biscotti",
+  "description": "purescript-httpure-contrib-biscotti",
+  "repository": "https://github.com/drewolson/purescript-httpure-contrib-biscotti",
   "license": "MIT",
   "devDependencies": {
     "purescript-language-server": "^0.12.7",

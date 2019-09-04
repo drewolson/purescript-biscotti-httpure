@@ -1,5 +1,5 @@
 { name =
-    "httpure-biscotti"
+    "httpure-contrib-biscotti"
 , dependencies =
     [ "aff"
     , "argonaut"
@@ -12,6 +12,8 @@
     , "profunctor-lenses"
     , "psci-support"
     , "test-unit"
+    , "tuples"
+    , "type-equality"
     ]
 , packages =
     ./packages.dhall

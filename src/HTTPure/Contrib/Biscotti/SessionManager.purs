@@ -1,8 +1,10 @@
-module HTTPure.Biscotti
+module HTTPure.Contrib.Biscotti.SessionManager
   ( createSession
+  , createSession'
   , destroySession
   , getSession
   , setSession
+  , setSession'
   ) where
 
 import Prelude
@@ -11,9 +13,11 @@ import Biscotti.Cookie (Cookie)
 import Biscotti.Cookie as Cookie
 import Biscotti.Session as Session
 import Biscotti.Session.Store (SessionStore)
+import Control.Monad.Except (ExceptT(..), except, runExceptT)
+import Control.Monad.Trans.Class (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson)
 import Data.Bifunctor (lmap)
-import Data.Either (Either(..), note)
+import Data.Either (Either, note)
 import Data.Lens (Lens', lens)
 import Data.Lens as Lens
 import Data.Lens.At (at)
@@ -32,10 +36,22 @@ createSession
   -> a
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
-createSession store session response = do
-  result <- Session.create store session
+createSession store = createSession' store pure
 
-  pure $ setSessionCookie response <$> result
+createSession'
+  :: forall m a
+   . MonadAff m
+  => EncodeJson a
+  => SessionStore m a
+  -> (Cookie -> m Cookie)
+  -> a
+  -> HTTPure.Response
+  -> m (Either String HTTPure.Response)
+createSession' store cookieUpdater session response = runExceptT do
+  cookie <- ExceptT $ Session.create store session
+  cookie' <- lift $ cookieUpdater cookie
+
+  pure $ setSessionCookie response cookie'
 
 destroySession
   :: forall m a
@@ -45,14 +61,11 @@ destroySession
   -> HTTPure.Request
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
-destroySession store request response =
-  case getSessionCookie request of
-    Left e ->
-      pure $ Left e
+destroySession store request response = runExceptT do
+  cookie <- except $ getSessionCookie request
+  cookie' <- ExceptT $ Session.destroy store cookie
 
-    Right cookie -> do
-      cookie' <- Session.destroy store cookie
-      pure $ setSessionCookie response <$> cookie'
+  pure $ setSessionCookie response cookie'
 
 getSession
   :: forall m a
@@ -61,13 +74,10 @@ getSession
   => SessionStore m a
   -> HTTPure.Request
   -> m (Either String a)
-getSession store request =
-  case getSessionCookie request of
-    Left a ->
-      pure $ Left a
+getSession store request = runExceptT do
+  cookie <- except $ getSessionCookie request
 
-    Right cookie ->
-      Session.get store cookie
+  ExceptT $ Session.get store cookie
 
 setSession
   :: forall m a
@@ -78,14 +88,24 @@ setSession
   -> HTTPure.Request
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
-setSession store session request response =
-  case getSessionCookie request of
-    Left e ->
-      pure $ Left e
+setSession store = setSession' store pure
 
-    Right cookie -> do
-      cookie' <- Session.set store session cookie
-      pure $ setSessionCookie response <$> cookie'
+setSession'
+  :: forall m a
+   . MonadAff m
+  => EncodeJson a
+  => SessionStore m a
+  -> (Cookie -> m Cookie)
+  -> a
+  -> HTTPure.Request
+  -> HTTPure.Response
+  -> m (Either String HTTPure.Response)
+setSession' store cookieUpdater session request response = runExceptT do
+  cookie <- except $ getSessionCookie request
+  cookie' <- ExceptT $ Session.set store session cookie
+  cookie'' <- lift $ cookieUpdater cookie'
+
+  pure $ setSessionCookie response cookie''
 
 requestCookieTag :: String
 requestCookieTag = "Cookie"
