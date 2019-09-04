@@ -10,15 +10,13 @@ import Prelude
 
 import Biscotti.Cookie (Cookie)
 import Biscotti.Session.Store (SessionStore)
-import Control.Monad.State (class MonadState, gets, modify_)
 import Data.Argonaut (class DecodeJson, class EncodeJson)
 import Data.Either (either, hush)
 import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff.Class (class MonadAff, liftAff)
 import HTTPure as HTTPure
-import HTTPure.Contrib.Biscotti.SessionContainer (class SessionContainer)
-import HTTPure.Contrib.Biscotti.SessionContainer as SessionContainer
 import HTTPure.Contrib.Biscotti.SessionManager as SessionManager
 
 data SessionError
@@ -33,14 +31,12 @@ type CookieUpdater m =
   Cookie -> m Cookie
 
 new
-  :: forall m a b
+  :: forall m a
    . MonadAff m
-  => MonadState a m
-  => EncodeJson b
-  => DecodeJson b
-  => SessionContainer a b
-  => SessionStore b
-  -> (HTTPure.Request -> m HTTPure.Response)
+  => EncodeJson a
+  => DecodeJson a
+  => SessionStore a
+  -> (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a)))
   -> HTTPure.Request
   -> m HTTPure.Response
 new store = new' store defaultErrorHandler defaultCookieUpdater
@@ -52,25 +48,20 @@ new store = new' store defaultErrorHandler defaultCookieUpdater
     defaultCookieUpdater = pure
 
 new'
-  :: forall m a b
+  :: forall m a
    . MonadAff m
-  => MonadState a m
-  => EncodeJson b
-  => DecodeJson b
-  => SessionContainer a b
-  => SessionStore b
+  => EncodeJson a
+  => DecodeJson a
+  => SessionStore a
   -> ErrorHandler m
   -> CookieUpdater m
-  -> (HTTPure.Request -> m HTTPure.Response)
+  -> (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a)))
   -> HTTPure.Request
   -> m HTTPure.Response
 new' store errorHandler cookieUpdater next req = do
   beforeSession <- hush <$> SessionManager.getSession store req
-  modify_ $ SessionContainer.setSession beforeSession
 
-  response <- next req
-
-  afterSession <- gets $ SessionContainer.getSession
+  response /\ afterSession <- next beforeSession req
 
   case beforeSession /\ afterSession of
     Nothing /\ Nothing ->
