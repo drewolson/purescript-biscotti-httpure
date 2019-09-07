@@ -4,9 +4,8 @@ module Test.HTTPure.Contrib.Biscotti.MiddlewareTest
 
 import Prelude
 
-import Biscotti.Cookie (Cookie)
+import Biscotti.Cookie.Types (Cookie(..))
 import Biscotti.Cookie as Cookie
-import Biscotti.Session (SessionStore)
 import Biscotti.Session as Session
 import Data.Either (Either(..), fromRight)
 import Data.Maybe (Maybe(..), fromJust)
@@ -43,23 +42,23 @@ mockRequest maybeCookie method path =
         Just cookie ->
           HTTPure.header "Cookie" (Cookie.stringify cookie)
 
-makeRouter :: SessionStore Session -> HTTPure.Request -> HTTPure.ResponseM
-makeRouter store = Middleware.new store router
-  where
-    router :: Maybe Session -> HTTPure.Request -> Aff (Tuple HTTPure.Response (Maybe Session))
-    router session req = do
-      case req of
-        { path: ["login"] } -> do
-          response <- HTTPure.ok "login"
-          pure $ Tuple response (Just { currentUser: "Drew" })
+router :: Maybe Session -> HTTPure.Request -> Aff (Tuple HTTPure.Response (Maybe Session))
+router session req = do
+  case req of
+    { path: ["login"] } -> do
+      response <- HTTPure.ok "login"
+      pure $ Tuple response (Just { currentUser: "Drew" })
 
-        { path: ["logout"] } -> do
-          response <- HTTPure.ok "logout"
-          pure $ Tuple response Nothing
+    { path: ["logout"] } -> do
+      response <- HTTPure.ok "logout"
+      pure $ Tuple response Nothing
 
-        _ -> do
-          response <- HTTPure.ok "hello"
-          pure $ Tuple response session
+    _ -> do
+      response <- HTTPure.ok "hello"
+      pure $ Tuple response session
+
+updateCookie :: Cookie -> Aff Cookie
+updateCookie = pure <<< Cookie.setSecure
 
 testSuite :: TestSuite
 testSuite = do
@@ -67,11 +66,11 @@ testSuite = do
     suite "new" do
       test "login creates a session" do
         store <- liftEffect $ Session.memoryStore "_test"
-        let router = makeRouter store
+        let app = Middleware.new store router
         let reqCookie = Nothing
         let request = mockRequest reqCookie HTTPure.Get ["login"]
 
-        response <- router request
+        response <- app request
 
         let cookieHeader = unsafePartial $ fromJust $ Lookup.lookup response.headers "Set-Cookie"
         let cookie = unsafePartial $ fromRight $ Cookie.parse cookieHeader
@@ -82,13 +81,27 @@ testSuite = do
       test "logout destroys the session" do
         store <- liftEffect $ Session.memoryStore "_test"
         reqCookie <- unsafePartial $ fromRight <$> Session.create store { currentUser: "Drew" }
-        let router = makeRouter store
+        let app = Middleware.new store router
         let request = mockRequest (Just reqCookie) HTTPure.Get ["logout"]
 
-        response <- router request
+        response <- app request
 
         let cookieHeader = unsafePartial $ fromJust $ Lookup.lookup response.headers "Set-Cookie"
         let cookie = unsafePartial $ fromRight $ Cookie.parse cookieHeader
         session <- Session.get store cookie
 
         session `shouldEqual` Left "session not found"
+
+    suite "new'" do
+      test "uses the cookie updater if provided" do
+        store <- liftEffect $ Session.memoryStore "_test"
+        let app = Middleware.new' store Middleware.defaultErrorHandler updateCookie router
+        let reqCookie = Nothing
+        let request = mockRequest reqCookie HTTPure.Get ["login"]
+
+        response <- app request
+
+        let cookieHeader = unsafePartial $ fromJust $ Lookup.lookup response.headers "Set-Cookie"
+        let (Cookie c) = unsafePartial $ fromRight $ Cookie.parse cookieHeader
+
+        c.secure `shouldEqual` true

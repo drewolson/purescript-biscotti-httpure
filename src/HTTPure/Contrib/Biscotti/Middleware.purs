@@ -2,6 +2,8 @@ module HTTPure.Contrib.Biscotti.Middleware
   ( CookieUpdater
   , ErrorHandler
   , SessionError
+  , defaultCookieUpdater
+  , defaultErrorHandler
   , new
   , new'
   ) where
@@ -40,12 +42,6 @@ new
   -> HTTPure.Request
   -> m HTTPure.Response
 new store = new' store defaultErrorHandler defaultCookieUpdater
-  where
-    defaultErrorHandler :: ErrorHandler m
-    defaultErrorHandler _ _ = liftAff $ HTTPure.internalServerError "error"
-
-    defaultCookieUpdater :: CookieUpdater m
-    defaultCookieUpdater = pure
 
 new'
   :: forall m a
@@ -81,3 +77,9 @@ new' store errorHandler cookieUpdater next req = do
       result <- SessionManager.setSession' store cookieUpdater session req response
 
       either (errorHandler response <<< SetError) pure result
+
+defaultCookieUpdater :: forall m. MonadAff m => CookieUpdater m
+defaultCookieUpdater = pure
+
+defaultErrorHandler :: forall m. MonadAff m => ErrorHandler m
+defaultErrorHandler _ _ = liftAff $ HTTPure.internalServerError "error"
