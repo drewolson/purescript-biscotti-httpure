@@ -1,6 +1,5 @@
 module HTTPure.Contrib.Biscotti
-  ( module HTTPure.Contrib.Biscotti.SessionManager
-  , middleware
+  ( middleware
   , middleware'
   ) where
 
@@ -12,7 +11,6 @@ import Effect.Aff.Class (class MonadAff)
 import HTTPure as HTTPure
 import HTTPure.Contrib.Biscotti.Middleware (ErrorHandler, CookieUpdater)
 import HTTPure.Contrib.Biscotti.Middleware as Middleware
-import HTTPure.Contrib.Biscotti.SessionManager (createSession, destroySession, getSession, setSession)
 
 middleware
   :: forall m a
