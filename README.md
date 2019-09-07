@@ -23,9 +23,9 @@ expects the next middleware in the stack to receive a `Maybe Session` along with
 `HTTPure.Request`.  It expects the return type to be an `MonadAff m => m (Tuple
 HTTPure.Response (Maybe Session))` rather than just a `m HTTPure.Response`.
 
-If you return `Nothing` for your `Session`, your session will be destroy. If you
-return a `Just Session`, you session will be created if it doesn't currently
-exist, otherwise it will be updated.
+If you return `Nothing` for your `Session`, your session will be destroyed. If
+you return a `Just Session`, your session will be created if it doesn't
+currently exist, otherwise it will be updated.
 
 Here's a small example application:
 
