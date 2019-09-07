@@ -5,8 +5,8 @@ This library provides a middleware that uses
 [Biscotti.Session](https://github.com/drewolson/purescript-biscotti-session) to
 add session handling to an
 [HTTPure](https://github.com/cprussin/purescript-httpure) application. The
-`Middleware.new` function requires a session store and then behaves similar to
-other `HTTPure` middleware.
+`Biscotti.middleware` function requires a session store and then behaves similar
+to other `HTTPure` middleware.
 
 Suppose the type of your session is:
 
