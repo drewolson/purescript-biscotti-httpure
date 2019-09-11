@@ -59,21 +59,21 @@ new' store errorHandler cookieUpdater next req = do
 
   response /\ afterSession <- next beforeSession req
 
-  case beforeSession /\ afterSession of
-    Nothing /\ Nothing ->
+  case beforeSession, afterSession of
+    Nothing, Nothing ->
       pure response
 
-    Just _ /\ Nothing -> do
+    Just _, Nothing -> do
       result <- SessionManager.destroySession store req response
 
       either (errorHandler response <<< DestroyError) pure result
 
-    Nothing /\ Just session -> do
+    Nothing, Just session -> do
       result <- SessionManager.createSession' store cookieUpdater session response
 
       either (errorHandler response <<< CreateError) pure result
 
-    Just _ /\ Just session -> do
+    Just _, Just session -> do
       result <- SessionManager.setSession' store cookieUpdater session req response
 
       either (errorHandler response <<< SetError) pure result
