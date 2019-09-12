@@ -1,7 +1,7 @@
 module HTTPure.Contrib.Biscotti.Middleware
   ( CookieUpdater
   , ErrorHandler
-  , SessionError
+  , SessionError(..)
   , defaultCookieUpdater
   , defaultErrorHandler
   , new
@@ -14,6 +14,8 @@ import Biscotti.Cookie (Cookie)
 import Biscotti.Session.Store (SessionStore)
 import Data.Argonaut (class DecodeJson, class EncodeJson)
 import Data.Either (either, hush)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
@@ -25,6 +27,12 @@ data SessionError
   = CreateError String
   | DestroyError String
   | SetError String
+
+derive instance genericSessionError :: Generic SessionError _
+
+instance showSessionError :: Show SessionError where
+  show :: SessionError -> String
+  show = genericShow
 
 type ErrorHandler m =
   HTTPure.Response -> SessionError -> m HTTPure.Response
