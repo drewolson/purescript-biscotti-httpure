@@ -16,12 +16,14 @@ import Biscotti.Session.Store (SessionStore)
 import Control.Monad.Except (ExceptT(..), except, runExceptT)
 import Control.Monad.Trans.Class (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson)
+import Data.Array (find)
 import Data.Bifunctor (lmap)
 import Data.Either (Either, note)
 import Data.Lens (Lens', lens)
 import Data.Lens as Lens
 import Data.Lens.At (at)
 import Data.Lens.Iso.Newtype (_Newtype)
+import Data.List (List)
 import Data.Maybe (Maybe)
 import Data.String.CaseInsensitive (CaseInsensitiveString(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -57,12 +59,13 @@ destroySession
   :: forall m a
    . MonadAff m
   => EncodeJson a
-  => SessionStore a
+  => String
+  -> SessionStore a
   -> HTTPure.Request
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
-destroySession store request response = runExceptT do
-  cookie <- except $ getSessionCookie request
+destroySession name store request response = runExceptT do
+  cookie <- except $ getSessionCookie name request
   cookie' <- ExceptT $ liftAff $ Session.destroy store cookie
 
   pure $ setSessionCookie response cookie'
@@ -71,11 +74,12 @@ getSession
   :: forall m a
    . MonadAff m
   => DecodeJson a
-  => SessionStore a
+  => String
+  -> SessionStore a
   -> HTTPure.Request
   -> m (Either String a)
-getSession store request = runExceptT do
-  cookie <- except $ getSessionCookie request
+getSession name store request = runExceptT do
+  cookie <- except $ getSessionCookie name request
 
   ExceptT $ liftAff $ Session.get store cookie
 
@@ -83,25 +87,27 @@ setSession
   :: forall m a
    . MonadAff m
   => EncodeJson a
-  => SessionStore a
+  => String
+  -> SessionStore a
   -> a
   -> HTTPure.Request
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
-setSession store = setSession' store pure
+setSession name store = setSession' name store pure
 
 setSession'
   :: forall m a
    . MonadAff m
   => EncodeJson a
-  => SessionStore a
+  => String
+  -> SessionStore a
   -> (Cookie -> m Cookie)
   -> a
   -> HTTPure.Request
   -> HTTPure.Response
   -> m (Either String HTTPure.Response)
-setSession' store cookieUpdater session request response = runExceptT do
-  cookie <- except $ getSessionCookie request
+setSession' name store cookieUpdater session request response = runExceptT do
+  cookie <- except $ getSessionCookie name request
   cookie' <- ExceptT $ liftAff $ Session.set store session cookie
   cookie'' <- lift $ cookieUpdater cookie'
 
@@ -117,13 +123,18 @@ setSessionCookie :: HTTPure.Response -> Cookie -> HTTPure.Response
 setSessionCookie response cookie =
   Lens.setJust (_headers <<< _Newtype <<< at (CaseInsensitiveString responseCookieTag)) (Cookie.stringify cookie) response
 
-getSessionCookie :: HTTPure.Request -> Either String Cookie
-getSessionCookie request = do
-  cookie <- note "cookie not found" $ findCookie request
-  lmap show $ Cookie.parse cookie
+getSessionCookie :: String -> HTTPure.Request -> Either String Cookie
+getSessionCookie name request = do
+  cookieHeader <- note "cookie header not found" $ findCookieHeader request
+  cookies <- lmap show $ Cookie.parseMany cookieHeader
+
+  findCookie cookies
   where
-    findCookie :: HTTPure.Request -> Maybe String
-    findCookie = Lens.view (_headers <<< _Newtype <<< at (CaseInsensitiveString requestCookieTag))
+    findCookieHeader :: HTTPure.Request -> Maybe String
+    findCookieHeader = Lens.view (_headers <<< _Newtype <<< at (CaseInsensitiveString requestCookieTag))
+
+    findCookie :: List Cookie -> Either String Cookie
+    findCookie = note "cookie not found" <<< find ((_ == name) <<< Cookie.getName)
 
 _headers :: forall r. Lens' { headers :: Headers | r } Headers
 _headers = lens _.headers $ _ { headers = _ }

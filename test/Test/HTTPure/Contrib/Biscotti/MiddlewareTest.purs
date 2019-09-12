@@ -40,7 +40,7 @@ mockRequest maybeCookie method path =
           HTTPure.empty
 
         Just cookie ->
-          HTTPure.header "Cookie" (Cookie.stringify cookie)
+          HTTPure.header "Cookie" $ "otherkey=otherval; " <> (Cookie.stringify cookie)
 
 router :: Maybe Session -> HTTPure.Request -> Aff (Tuple HTTPure.Response (Maybe Session))
 router session req = do
@@ -66,7 +66,7 @@ testSuite = do
     suite "new" do
       test "login creates a session" do
         store <- liftEffect $ Session.memoryStore "_test"
-        let app = Middleware.new store router
+        let app = Middleware.new "_test" store router
         let reqCookie = Nothing
         let request = mockRequest reqCookie HTTPure.Get ["login"]
 
@@ -81,7 +81,7 @@ testSuite = do
       test "logout destroys the session" do
         store <- liftEffect $ Session.memoryStore "_test"
         reqCookie <- unsafePartial $ fromRight <$> Session.create store { currentUser: "Drew" }
-        let app = Middleware.new store router
+        let app = Middleware.new "_test" store router
         let request = mockRequest (Just reqCookie) HTTPure.Get ["logout"]
 
         response <- app request
@@ -95,7 +95,7 @@ testSuite = do
     suite "new'" do
       test "uses the cookie updater if provided" do
         store <- liftEffect $ Session.memoryStore "_test"
-        let app = Middleware.new' store Middleware.defaultErrorHandler updateCookie router
+        let app = Middleware.new' "_test" store Middleware.defaultErrorHandler updateCookie router
         let reqCookie = Nothing
         let request = mockRequest reqCookie HTTPure.Get ["login"]
 

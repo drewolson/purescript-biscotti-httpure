@@ -68,7 +68,7 @@ testSuite = do
       test "destroys the sesion and sets an expired cookie" do
         store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
-        response <- unsafePartial $ fromRight <$> SessionManager.destroySession store (mockRequest cookie) mockResponse
+        response <- unsafePartial $ fromRight <$> SessionManager.destroySession "_my_app" store (mockRequest cookie) mockResponse
         let Cookie { expires } = responseCookie response
 
         assert "expected an expires date" $ expires /= Nothing
@@ -82,7 +82,7 @@ testSuite = do
         store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         let request = mockRequest cookie
-        session <- unsafePartial $ fromRight <$> SessionManager.getSession store request
+        session <- unsafePartial $ fromRight <$> SessionManager.getSession "_my_app" store request
 
         session `shouldEqual` { message: "hello" }
 
@@ -91,7 +91,7 @@ testSuite = do
         store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         let request = mockRequest cookie
-        response <- unsafePartial $ fromRight <$> SessionManager.setSession store { message: "goodbye" } request mockResponse
+        response <- unsafePartial $ fromRight <$> SessionManager.setSession "_my_app" store { message: "goodbye" } request mockResponse
 
         session <- responseSession store response
 

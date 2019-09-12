@@ -17,7 +17,8 @@ middleware
    . MonadAff m
   => EncodeJson a
   => DecodeJson a
-  => SessionStore a
+  => String
+  -> SessionStore a
   -> (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a)))
   -> HTTPure.Request
   -> m HTTPure.Response
@@ -28,7 +29,8 @@ middleware'
    . MonadAff m
   => EncodeJson a
   => DecodeJson a
-  => SessionStore a
+  => String
+  -> SessionStore a
   -> ErrorHandler m
   -> CookieUpdater m
   -> (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a)))

@@ -45,25 +45,27 @@ new
    . MonadAff m
   => EncodeJson a
   => DecodeJson a
-  => SessionStore a
+  => String
+  -> SessionStore a
   -> (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a)))
   -> HTTPure.Request
   -> m HTTPure.Response
-new store = new' store defaultErrorHandler defaultCookieUpdater
+new name store = new' name store defaultErrorHandler defaultCookieUpdater
 
 new'
   :: forall m a
    . MonadAff m
   => EncodeJson a
   => DecodeJson a
-  => SessionStore a
+  => String
+  -> SessionStore a
   -> ErrorHandler m
   -> CookieUpdater m
   -> (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a)))
   -> HTTPure.Request
   -> m HTTPure.Response
-new' store errorHandler cookieUpdater next req = do
-  beforeSession <- hush <$> SessionManager.getSession store req
+new' name store errorHandler cookieUpdater next req = do
+  beforeSession <- hush <$> SessionManager.getSession name store req
 
   response /\ afterSession <- next beforeSession req
 
@@ -72,7 +74,7 @@ new' store errorHandler cookieUpdater next req = do
       pure response
 
     Just _, Nothing -> do
-      result <- SessionManager.destroySession store req response
+      result <- SessionManager.destroySession name store req response
 
       either (errorHandler response <<< DestroyError) pure result
 
@@ -82,7 +84,7 @@ new' store errorHandler cookieUpdater next req = do
       either (errorHandler response <<< CreateError) pure result
 
     Just _, Just session -> do
-      result <- SessionManager.setSession' store cookieUpdater session req response
+      result <- SessionManager.setSession' name store cookieUpdater session req response
 
       either (errorHandler response <<< SetError) pure result
 
