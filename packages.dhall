@@ -1,12 +1,7 @@
 let upstream =
-      https://raw.githubusercontent.com/purescript/package-sets/f0109e1f1584dc7a93d446a1d99d1e5a08a899aa/src/packages.dhall sha256:38ef8e916a085413c2be52e9cfaf1e795d441f88c78cf960d7bb3de174dc70a9
+      https://raw.githubusercontent.com/purescript/package-sets/402fbe57afb6c14bf5f5d06a93ceb7e209924abd/src/packages.dhall sha256:095e879c67df226c067f09278a76c179b00371fc086f7ffb7b80503fc10afae7
 
-let overrides =
-      { biscotti-cookie =
-          upstream.biscotti-cookie //
-            { version = "9acd77869def7cec33f105c7153ee4ccf5ad0e2f"
-            }
-      }
+let overrides = {=}
 
 let additions = {=}
 
