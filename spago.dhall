@@ -18,7 +18,6 @@
     , "psci-support"
     , "test-unit"
     , "tuples"
-    , "type-equality"
     ]
 , packages =
     ./packages.dhall
