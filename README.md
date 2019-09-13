@@ -1,5 +1,8 @@
 # purescript-httpure-contrib-biscotti
 
+Documentation is on
+[Pursuit](https://pursuit.purescript.org/packages/purescript-httpure-contrib-biscotti).
+
 This library provides a middleware that uses
 [Biscotti.Cookie](https://github.com/drewolson/purescript-biscotti-cookie) and
 [Biscotti.Session](https://github.com/drewolson/purescript-biscotti-session) to
@@ -52,8 +55,9 @@ router session req = do
 
 main :: Effect Unit
 main = launchAff_ do
-  store <- liftEffect $ Session.memoryStore "_test"
-  let middleware = Biscotti.middleware store
+  let cookieName = "_test"
+  store <- liftEffect $ Session.memoryStore cookieName
+  let middleware = Biscotti.middleware cookieName store
 
   liftEffect $ HTTPure.server (middleware router) do
     log "Server running"

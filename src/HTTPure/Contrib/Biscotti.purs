@@ -12,6 +12,14 @@ import HTTPure as HTTPure
 import HTTPure.Contrib.Biscotti.Middleware (ErrorHandler, CookieUpdater)
 import HTTPure.Contrib.Biscotti.Middleware as Middleware
 
+-- | Create an HTTPure middleware for sesion handling.
+-- | Requires the name of your cookie and a `Biscotti.Session.SessionStore`
+-- |
+-- | ```purescript
+-- | launchAff_ do
+-- |   store <- liftEffect $ Session.memoryStore "_test"
+-- |   let middleware = Biscotti.middleware "_test" store
+-- | ```
 middleware
   :: forall m a
    . MonadAff m
