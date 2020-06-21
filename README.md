@@ -1,5 +1,7 @@
 # purescript-httpure-contrib-biscotti
 
+[![Build Status](https://travis-ci.org/drewolson/purescript-httpure-contrib-biscotti.svg?branch=master)](https://travis-ci.org/drewolson/purescript-httpure-contrib-biscotti)
+
 Documentation is on
 [Pursuit](https://pursuit.purescript.org/packages/purescript-httpure-contrib-biscotti).
 

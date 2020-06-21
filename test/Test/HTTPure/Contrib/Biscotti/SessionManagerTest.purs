@@ -3,7 +3,6 @@ module Test.HTTPure.Contrib.Biscotti.SessionManagerTest
   ) where
 
 import Prelude
-
 import Biscotti.Cookie as Cookie
 import Biscotti.Cookie.Types (Cookie(..))
 import Biscotti.Session (SessionStore)
@@ -35,7 +34,7 @@ mockResponse =
 mockRequest :: Cookie -> HTTPure.Request
 mockRequest cookie =
   { method: Method.Get
-  , path: ["/"]
+  , path: [ "/" ]
   , query: Object.empty
   , headers: Headers.header "Cookie" (Cookie.stringify cookie)
   , body: ""
@@ -44,13 +43,14 @@ mockRequest cookie =
 
 responseCookie :: HTTPure.Response -> Cookie
 responseCookie { headers } =
-  let cookieString = unsafePartial $ fromJust $ Lookup.lookup headers "Set-Cookie"
-   in unsafePartial $ fromRight $ Cookie.parse cookieString
+  let
+    cookieString = unsafePartial $ fromJust $ Lookup.lookup headers "Set-Cookie"
+  in
+    unsafePartial $ fromRight $ Cookie.parse cookieString
 
 responseSession :: forall m a. MonadAff m => DecodeJson a => SessionStore a -> HTTPure.Response -> m a
 responseSession store response = do
   result <- liftAff $ Session.get store (responseCookie response)
-
   pure $ unsafePartial $ fromRight $ result
 
 testSuite :: TestSuite
@@ -61,38 +61,31 @@ testSuite = do
         store <- liftEffect $ Session.memoryStore "_my_app"
         response <- unsafePartial $ fromRight <$> SessionManager.createSession store { message: "hello" } mockResponse
         session <- responseSession store response
-
         session `shouldEqual` { message: "hello" }
-
     suite "destroySession" do
       test "destroys the sesion and sets an expired cookie" do
         store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
         response <- unsafePartial $ fromRight <$> SessionManager.destroySession "_my_app" store (mockRequest cookie) mockResponse
-        let Cookie { expires } = responseCookie response
-
+        let
+          Cookie { expires } = responseCookie response
         assert "expected an expires date" $ expires /= Nothing
-
         found <- Session.get store cookie
-
         found `shouldEqual` Left "session not found"
-
     suite "getSession" do
       test "retrieves the session" do
         store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
-        let request = mockRequest cookie
+        let
+          request = mockRequest cookie
         session <- unsafePartial $ fromRight <$> SessionManager.getSession "_my_app" store request
-
         session `shouldEqual` { message: "hello" }
-
     suite "setSession" do
       test "sets a session with new data" do
         store <- liftEffect $ Session.memoryStore "_my_app"
         cookie <- unsafePartial $ fromRight <$> Session.create store { message: "hello" }
-        let request = mockRequest cookie
+        let
+          request = mockRequest cookie
         response <- unsafePartial $ fromRight <$> SessionManager.setSession "_my_app" store { message: "goodbye" } request mockResponse
-
         session <- responseSession store response
-
         session `shouldEqual` { message: "goodbye" }

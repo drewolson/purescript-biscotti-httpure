@@ -9,7 +9,6 @@ module HTTPure.Contrib.Biscotti.Middleware
   ) where
 
 import Prelude
-
 import Biscotti.Cookie (Cookie)
 import Biscotti.Session.Store (SessionStore)
 import Data.Argonaut (class DecodeJson, class EncodeJson)
@@ -34,58 +33,49 @@ instance showSessionError :: Show SessionError where
   show :: SessionError -> String
   show = genericShow
 
-type ErrorHandler m =
-  HTTPure.Response -> SessionError -> m HTTPure.Response
+type ErrorHandler m
+  = HTTPure.Response -> SessionError -> m HTTPure.Response
 
-type CookieUpdater m =
-  Cookie -> m Cookie
+type CookieUpdater m
+  = Cookie -> m Cookie
 
-new
-  :: forall m a
-   . MonadAff m
-  => EncodeJson a
-  => DecodeJson a
-  => String
-  -> SessionStore a
-  -> (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a)))
-  -> HTTPure.Request
-  -> m HTTPure.Response
+new ::
+  forall m a.
+  MonadAff m =>
+  EncodeJson a =>
+  DecodeJson a =>
+  String ->
+  SessionStore a ->
+  (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a))) ->
+  HTTPure.Request ->
+  m HTTPure.Response
 new name store = new' name store defaultErrorHandler defaultCookieUpdater
 
-new'
-  :: forall m a
-   . MonadAff m
-  => EncodeJson a
-  => DecodeJson a
-  => String
-  -> SessionStore a
-  -> ErrorHandler m
-  -> CookieUpdater m
-  -> (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a)))
-  -> HTTPure.Request
-  -> m HTTPure.Response
+new' ::
+  forall m a.
+  MonadAff m =>
+  EncodeJson a =>
+  DecodeJson a =>
+  String ->
+  SessionStore a ->
+  ErrorHandler m ->
+  CookieUpdater m ->
+  (Maybe a -> HTTPure.Request -> m (Tuple HTTPure.Response (Maybe a))) ->
+  HTTPure.Request ->
+  m HTTPure.Response
 new' name store errorHandler cookieUpdater next req = do
   beforeSession <- hush <$> SessionManager.getSession name store req
-
   response /\ afterSession <- next beforeSession req
-
   case beforeSession, afterSession of
-    Nothing, Nothing ->
-      pure response
-
+    Nothing, Nothing -> pure response
     Just _, Nothing -> do
       result <- SessionManager.destroySession name store req response
-
       either (errorHandler response <<< DestroyError) pure result
-
     Nothing, Just session -> do
       result <- SessionManager.createSession' store cookieUpdater session response
-
       either (errorHandler response <<< CreateError) pure result
-
     Just _, Just session -> do
       result <- SessionManager.setSession' name store cookieUpdater session req response
-
       either (errorHandler response <<< SetError) pure result
 
 defaultCookieUpdater :: forall m. MonadAff m => CookieUpdater m
