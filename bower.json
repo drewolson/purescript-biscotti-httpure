@@ -21,12 +21,11 @@
         "purescript-effect": "^v2.0.1",
         "purescript-either": "^v4.1.1",
         "purescript-generics-rep": "^v6.1.1",
-        "purescript-httpure": "^v0.8.3",
+        "purescript-httpure": "^v0.10.0",
         "purescript-maybe": "^v4.0.1",
-        "purescript-profunctor-lenses": "^v6.2.0",
+        "purescript-profunctor-lenses": "^v6.3.0",
         "purescript-psci-support": "^v4.0.0",
         "purescript-test-unit": "^v15.0.0",
-        "purescript-tuples": "^v5.1.0",
-        "purescript-type-equality": "^v3.0.0"
+        "purescript-tuples": "^v5.1.0"
     }
 }
