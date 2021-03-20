@@ -1,6 +1,7 @@
 # purescript-httpure-contrib-biscotti
 
-[![Build Status](https://travis-ci.org/drewolson/purescript-httpure-contrib-biscotti.svg?branch=master)](https://travis-ci.org/drewolson/purescript-httpure-contrib-biscotti)
+[![Build
+Status](https://github.com/drewolson/purescript-httpure-contrib-biscotti/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/drewolson/purescript-httpure-contrib-biscotti/actions/workflows/test.yml)
 
 Documentation is on
 [Pursuit](https://pursuit.purescript.org/packages/purescript-httpure-contrib-biscotti).
