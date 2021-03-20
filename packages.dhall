@@ -1,13 +1,7 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.13.8-20200615/packages.dhall sha256:5d0cfad9408c84db0a3fdcea2d708f9ed8f64297e164dc57a7cf6328706df93a
+      https://raw.githubusercontent.com/purescript/package-sets/2dacd8208c3c910a330c7dab79d3add7b8bae802/src/packages.dhall sha256:37ff40bc9254f8df073d58733315ab88923f4a6d50bd18f52e634c70e6c5f675
 
-let overrides =
-      { argonaut = upstream.argonaut // { version = "v7.0.0" }
-      , argonaut-codecs = upstream.argonaut-codecs // { version = "v7.0.0" }
-      , argonaut-traversals =
-          upstream.argonaut-traversals // { version = "v8.0.0" }
-      , biscotti-session = upstream.biscotti-session // { version = "v0.1.2" }
-      }
+let overrides = {=}
 
 let additions = {=}
 

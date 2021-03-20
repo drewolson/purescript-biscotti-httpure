@@ -3,10 +3,10 @@ module Test.HTTPure.Contrib.Biscotti.MiddlewareTest
   ) where
 
 import Prelude
-import Biscotti.Cookie.Types (Cookie(..))
 import Biscotti.Cookie as Cookie
+import Biscotti.Cookie.Types (Cookie(..))
 import Biscotti.Session as Session
-import Data.Either (Either(..), fromRight)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
@@ -17,6 +17,7 @@ import HTTPure.Contrib.Biscotti.Middleware as Middleware
 import HTTPure.Lookup as Lookup
 import HTTPure.Version as Version
 import Partial.Unsafe (unsafePartial)
+import Test.HTTPure.Contrib.Biscotti.Support (unsafeFromRight)
 import Test.Unit (TestSuite, suite, test)
 import Test.Unit.Assert (shouldEqual)
 
@@ -31,6 +32,7 @@ mockRequest maybeCookie method path =
   , headers
   , body: ""
   , httpVersion: Version.HTTP2_0
+  , url: "http://example.com"
   }
   where
   headers :: HTTPure.Headers
@@ -70,12 +72,12 @@ testSuite = do
         let
           cookieHeader = unsafePartial $ fromJust $ Lookup.lookup response.headers "Set-Cookie"
         let
-          cookie = unsafePartial $ fromRight $ Cookie.parse cookieHeader
+          cookie = unsafeFromRight $ Cookie.parse cookieHeader
         session <- Session.get store cookie
         session `shouldEqual` Right { currentUser: "Drew" }
       test "logout destroys the session" do
         store <- liftEffect $ Session.memoryStore "_test"
-        reqCookie <- unsafePartial $ fromRight <$> Session.create store { currentUser: "Drew" }
+        reqCookie <- unsafeFromRight <$> Session.create store { currentUser: "Drew" }
         let
           app = Middleware.new "_test" store router
         let
@@ -84,7 +86,7 @@ testSuite = do
         let
           cookieHeader = unsafePartial $ fromJust $ Lookup.lookup response.headers "Set-Cookie"
         let
-          cookie = unsafePartial $ fromRight $ Cookie.parse cookieHeader
+          cookie = unsafeFromRight $ Cookie.parse cookieHeader
         session <- Session.get store cookie
         session `shouldEqual` Left "session not found"
     suite "new'" do
@@ -100,5 +102,5 @@ testSuite = do
         let
           cookieHeader = unsafePartial $ fromJust $ Lookup.lookup response.headers "Set-Cookie"
         let
-          (Cookie c) = unsafePartial $ fromRight $ Cookie.parse cookieHeader
+          (Cookie c) = unsafeFromRight $ Cookie.parse cookieHeader
         c.secure `shouldEqual` true
