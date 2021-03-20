@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v.0.2.0
+
+* Update for PureScript `v0.14`
+
 ## v.0.1.2
 
 * Update argonaut dependency
